@@ -30,6 +30,7 @@ const Employees = ({
   const colors = theme.palette;
   const route = useRouter();
 
+  const [selectionModel, setSelectionModel] = useState<any[]>([]);
   const [showDialogCsv, setShowDialogCsv] = useState(false);
   const [showDialogDelete, setShowDialogDelete] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
@@ -78,9 +79,6 @@ const Employees = ({
     try {
       const res = await fetch(`${apiUrl}/api/employees`, {
         method: 'POST',
-        // headers: {
-        //   'Content-Type': 'application/json'
-        // },
         body: formData
       });
 
@@ -97,6 +95,35 @@ const Employees = ({
       setShowDialogError(true);
       console.error('Upload failed', error);
     }
+  };
+
+  const handleDeletion = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/employees`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(selectionModel)
+      });
+
+      if (res.ok) {
+        setShowDialogDelete(false);
+        setShowDialog(true); // fixme: show dialog with deletion success message
+
+        refreshData();
+      } else {
+        console.error('Deletion failed:', res.status, await res.text());
+        setShowDialogError(true); // fixme: show dialog with deletion error message
+      }
+    } catch (error) {
+      console.error('Deletion failed', error);
+      setShowDialogError(true); // fixme: show dialog with deletion error message
+    }
+  };
+
+  const handleSelectionModelChange = (newSelection: any) => {
+    setSelectionModel(newSelection);
   };
 
   const refreshData = () => {
@@ -140,6 +167,8 @@ const Employees = ({
               autoHeight
               columns={columns}
               rows={data}
+              rowSelectionModel={selectionModel}
+              onRowSelectionModelChange={handleSelectionModelChange}
               sx={{
                 borderColor: colors.background.paper,
                 '& .MuiDataGrid-columnHeaders': {
@@ -187,7 +216,7 @@ const Employees = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialogDelete(false)}>No</Button>
-            <Button onClick={(e) => handleUploadCsv(e)}>Yes</Button>
+            <Button onClick={handleDeletion}>Yes</Button>
           </DialogActions>
         </Dialog>
 
