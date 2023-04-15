@@ -7,12 +7,12 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  Paper,
   TextField,
-  Toolbar,
   Typography,
   useTheme
 } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
 import Head from 'next/head';
 import { InferGetServerSidePropsType } from 'next';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -32,7 +32,10 @@ const Employees = ({
 
   const [selectionModel, setSelectionModel] = useState<any[]>([]);
   const [showDialogCsv, setShowDialogCsv] = useState(false);
-  const [showDialogDelete, setShowDialogDelete] = useState(false);
+  // const [showDialogDelete, setShowDialogDelete] = useState(false);
+  const [showDialogDelete, setShowDialogDelete] = useState({
+    open: false
+  });
   const [showDialog, setShowDialog] = useState(false);
   const [showDialogError, setShowDialogError] = useState(false);
   const [file, setFile] = useState(null);
@@ -41,7 +44,17 @@ const Employees = ({
     { field: 'id', headerName: 'ID', width: 100 },
     { field: 'login', headerName: 'Login', width: 130 },
     { field: 'name', headerName: 'Name', width: 250 },
-    { field: 'salary', headerName: 'Salary', width: 180 },
+    {
+      field: 'salary',
+      headerName: 'Salary',
+      width: 180,
+      type: 'number',
+      valueFormatter: ({ value }) =>
+        new Intl.NumberFormat(undefined, {
+          style: 'currency',
+          currency: 'SGD'
+        }).format(value)
+    },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -57,7 +70,7 @@ const Employees = ({
             <IconButton>
               <EditIcon />
             </IconButton>
-            <IconButton>
+            <IconButton onClick={() => handleDeletion([params.id])}>
               <DeleteIcon />
             </IconButton>
           </>
@@ -65,6 +78,10 @@ const Employees = ({
       }
     }
   ];
+
+  const test = (data) => {
+    console.log(data);
+  };
 
   const handleOnChange = (e) => {
     setFile(e.target.files[0]);
@@ -97,14 +114,14 @@ const Employees = ({
     }
   };
 
-  const handleDeletion = async () => {
+  const handleDeletion = async (ids) => {
     try {
       const res = await fetch(`${apiUrl}/api/employees`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(selectionModel)
+        body: JSON.stringify(ids)
       });
 
       if (res.ok) {
@@ -122,6 +139,10 @@ const Employees = ({
     }
   };
 
+  const handleDeletionDialog = () => {
+    setShowDialogDelete(true);
+  };
+
   const handleSelectionModelChange = (newSelection: any) => {
     setSelectionModel(newSelection);
   };
@@ -136,30 +157,49 @@ const Employees = ({
         <title>Employees</title>
       </Head>
 
-      <Box p={2}>
-        <Header title="Employees" subtitle="Manage employees" />
-        <Box py={4}>
-          <Box pb={2}>
-            <Toolbar
-              variant="dense"
-              disableGutters
-              sx={{
-                backgroundColor: colors.background.paper,
-                borderRadius: 1,
-                px: 1
-              }}
-            >
-              <Box display="flex" justifyContent="space-between" width="100%">
-                <Box>
-                  <IconButton onClick={() => setShowDialogCsv(true)}>
+      <Box px={2} pb={2} sx={{ backgroundColor: colors.background.paper }}>
+        <Box>
+          <Header title="Employees" subtitle="Manage employees" />
+        </Box>
+        <Box
+          p={2}
+          sx={{
+            backgroundColor: colors.background.default,
+            borderRadius: 2,
+            boxShadow: 0
+          }}
+        >
+          <Box>
+            <Box pb={2} display="flex">
+              <Box pr={2}>
+                <Paper>
+                  <IconButton
+                    sx={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: colors.background.paper
+                    }}
+                    onClick={() => setShowDialogCsv(true)}
+                  >
                     <UploadFileIcon />
                   </IconButton>
-                  <IconButton onClick={() => setShowDialogDelete(true)}>
+                </Paper>
+              </Box>
+              <Box pr={2}>
+                <Paper>
+                  <IconButton
+                    sx={{
+                      width: '48px',
+                      height: '48px',
+                      backgroundColor: colors.background.paper
+                    }}
+                    onClick={() => setShowDialogDelete(true)}
+                  >
                     <DeleteIcon />
                   </IconButton>
-                </Box>
+                </Paper>
               </Box>
-            </Toolbar>
+            </Box>
           </Box>
           <Box>
             <DataGrid
@@ -167,20 +207,28 @@ const Employees = ({
               autoHeight
               columns={columns}
               rows={data}
+              // paginationMode="client"
+              // paginationModel={{ page: 0, pageSize: 10 }}
+              // pageSizeOptions={[10, 20, 50]}
               rowSelectionModel={selectionModel}
               onRowSelectionModelChange={handleSelectionModelChange}
+              // slots={{ toolbar: GridToolbar }}
               sx={{
-                borderColor: colors.background.paper,
+                border: 'none',
+                borderRadius: 0,
                 '& .MuiDataGrid-columnHeaders': {
                   backgroundColor: colors.background.paper,
-                  borderColor: colors.background.paper
+                  borderColor: colors.background.paper,
+                  borderRadius: 0
+                },
+                '& .MuiDataGrid-columnsContainer': {
+                  borderBottom: 1,
+                  borderBottomColor: colors.divider,
+                  baclgroundColor: colors.background.paper
                 },
                 '& .MuiDataGrid-cell': {
-                  borderColor: colors.background.paper
-                },
-                '& .MuiDataGrid-footerContainer': {
-                  backgroundColor: colors.background.paper,
-                  borderColor: colors.background.paper
+                  borderBottom: 1,
+                  borderBottomColor: colors.divider
                 }
               }}
             />
@@ -205,7 +253,7 @@ const Employees = ({
 
         {/* DIALOG - DELETION */}
         <Dialog
-          open={showDialogDelete}
+          open={showDialogDelete.open}
           onClose={() => setShowDialogDelete(false)}
         >
           <DialogTitle>DELETE</DialogTitle>
@@ -216,7 +264,7 @@ const Employees = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowDialogDelete(false)}>No</Button>
-            <Button onClick={handleDeletion}>Yes</Button>
+            <Button onClick={() => handleDeletion(selectionModel)}>Yes</Button>
           </DialogActions>
         </Dialog>
 
