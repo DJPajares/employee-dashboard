@@ -7,9 +7,11 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  InputBase,
   Paper,
   TextField,
   Typography,
+  alpha,
   useTheme
 } from '@mui/material';
 import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
@@ -169,15 +171,20 @@ const Employees = ({
             boxShadow: 0
           }}
         >
-          <Box>
-            <Box pb={2} display="flex">
+          {/* TOOLBAR */}
+          <Box
+            pb={2}
+            display="flex"
+            flexDirection="row"
+            justifyContent="space-between"
+          >
+            <Box display="flex">
               <Box pr={2}>
                 <Paper>
                   <IconButton
                     sx={{
                       width: '48px',
-                      height: '48px',
-                      backgroundColor: colors.background.paper
+                      height: '48px'
                     }}
                     onClick={() => setShowDialogCsv(true)}
                   >
@@ -190,8 +197,7 @@ const Employees = ({
                   <IconButton
                     sx={{
                       width: '48px',
-                      height: '48px',
-                      backgroundColor: colors.background.paper
+                      height: '48px'
                     }}
                     onClick={() => setShowDialogDelete(true)}
                   >
@@ -200,7 +206,42 @@ const Employees = ({
                 </Paper>
               </Box>
             </Box>
+
+            <Box display="flex">
+              <Box
+                sx={{
+                  ml: 2,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: 0.5,
+                  backgroundColor: colors.background.paper,
+                  '&:hover': {
+                    backgroundColor: alpha(colors.background.paper, 0.5)
+                  }
+                }}
+              >
+                <InputBase placeholder="Min. Salary" />
+              </Box>
+              <Box
+                sx={{
+                  ml: 2,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: 0.5,
+                  backgroundColor: colors.background.paper,
+                  '&:hover': {
+                    backgroundColor: alpha(colors.background.paper, 0.5)
+                  }
+                }}
+              >
+                <InputBase placeholder="Max. Salary" />
+              </Box>
+            </Box>
           </Box>
+
+          {/* DATA GRID */}
           <Box>
             <DataGrid
               checkboxSelection
