@@ -204,7 +204,11 @@ const Employees = ({
         <title>Employees</title>
       </Head>
 
-      <Box px={2} pb={2} sx={{ backgroundColor: colors.background.paper }}>
+      <Box
+        px={2}
+        pb={2}
+        sx={{ minHeight: '100vh', backgroundColor: colors.background.paper }}
+      >
         <Box>
           <Header title="Employees" subtitle="Manage employees" />
         </Box>

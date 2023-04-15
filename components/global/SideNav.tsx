@@ -116,7 +116,7 @@ const SideNav = () => {
       collapsedWidth="5rem"
       width="16rem"
       backgroundColor={colors.background.default}
-      style={{ zIndex: 1150 }} // To overlapp MUI AppBar, it has a zIndex of 1100
+      style={{ minHeight: '100vh', zIndex: 1150 }} // To overlapp MUI AppBar, it has a zIndex of 1100
     >
       <Box py={1}>
         <Menu

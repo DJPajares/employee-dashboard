@@ -42,7 +42,7 @@ const TopBar = () => {
   const { broken, toggleSidebar } = useProSidebar();
 
   return (
-    <AppBar position="sticky" elevation={0}>
+    <AppBar position="sticky">
       <Toolbar
         sx={{
           display: 'flex',
