@@ -24,7 +24,7 @@ const CustomDialog = ({
 }: CustomDialogProps) => {
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>{title}</DialogTitle>
+      <DialogTitle sx={{ textTransform: 'uppercase' }}>{title}</DialogTitle>
       <DialogContent>
         <Typography variant="subtitle1">{content}</Typography>
       </DialogContent>

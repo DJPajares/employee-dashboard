@@ -26,6 +26,18 @@ import CustomDialog from '@/components/global/Dialog';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
+type DialogProps = {
+  title: string;
+  content: string;
+};
+
+type DataProps = {
+  id: string;
+  login: string;
+  name: string;
+  salary: number;
+};
+
 const Employees = ({
   data
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
@@ -43,7 +55,16 @@ const Employees = ({
     onClose: () => {},
     actions: <></>
   });
-  const [file, setFile] = useState(null);
+  const [showEditForm, setShowEditForm] = useState({
+    open: false,
+    data: {
+      id: '',
+      login: '',
+      name: '',
+      salary: 0
+    }
+  });
+  const [file, setFile] = useState<File | null>(null);
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 100 },
@@ -64,18 +85,19 @@ const Employees = ({
       field: 'actions',
       headerName: 'Actions',
       width: 180,
+      type: 'actions',
+      headerAlign: 'center',
       sortable: false,
       resizable: false,
       filterable: false,
       editable: false,
-      type: 'actions',
       renderCell: (params) => {
         return (
           <>
-            <IconButton>
+            <IconButton onClick={() => handleEditForm(params.row)}>
               <EditIcon />
             </IconButton>
-            <IconButton onClick={() => handleDeletion([params.id])}>
+            <IconButton onClick={() => handleDeletion([params.row.id])}>
               <DeleteIcon />
             </IconButton>
           </>
@@ -84,11 +106,15 @@ const Employees = ({
     }
   ];
 
-  const handleOnChange = (e) => {
-    setFile(e.target.files[0]);
+  const handleOnChange = (e: Event) => {
+    const inputElement = e.target as HTMLInputElement;
+    if (inputElement.files && inputElement.files.length > 0) {
+      const file = inputElement.files[0];
+      setFile(file);
+    }
   };
 
-  const handleUploadCsv = async (e) => {
+  const handleUploadCsv = async (e: Event) => {
     e.preventDefault();
 
     const formData = new FormData();
@@ -126,7 +152,7 @@ const Employees = ({
     }
   };
 
-  const handleDeletion = async (ids) => {
+  const handleDeletion = async (ids: string[]) => {
     try {
       const res = await fetch(`${apiUrl}/api/employees`, {
         method: 'DELETE',
@@ -160,7 +186,7 @@ const Employees = ({
     }
   };
 
-  const handleDialog = ({ title, content }) => {
+  const handleDialog = ({ title, content }: DialogProps) => {
     const actions = (
       <>
         <Button
@@ -190,7 +216,56 @@ const Employees = ({
     });
   };
 
-  const handleSelectionModelChange = (newSelection: any) => {
+  const handleEditForm = (params: DataProps) => {
+    console.log('params', params);
+    setShowEditForm({
+      open: true,
+      data: params
+    });
+  };
+
+  const handleSubmitForm = async () => {
+    try {
+      const res = await fetch(
+        `${apiUrl}/api/employees/${showEditForm.data.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(showEditForm.data)
+        }
+      );
+
+      if (res.ok) {
+        handleDialog({
+          title: 'Update successful',
+          content: 'Employee has been successfully updated'
+        });
+
+        refreshData();
+      } else {
+        handleDialog({
+          title: 'Update failed',
+          content: 'Employee has not been updated'
+        });
+        console.error('Update failed:', res.status, await res.text());
+      }
+    } catch (error) {
+      handleDialog({
+        title: 'Update failed',
+        content: 'Employee has not been updated'
+      });
+      console.error('Error', error);
+    }
+
+    setShowEditForm({
+      ...showEditForm,
+      open: false
+    });
+  };
+
+  const handleSelectionModelChange = (newSelection: DataProps[]) => {
     setSelectionModel(newSelection);
   };
 
@@ -308,13 +383,7 @@ const Employees = ({
                 borderRadius: 0,
                 '& .MuiDataGrid-columnHeaders': {
                   backgroundColor: colors.background.paper,
-                  borderColor: colors.background.paper,
                   borderRadius: 0
-                },
-                '& .MuiDataGrid-columnsContainer': {
-                  borderBottom: 1,
-                  borderBottomColor: colors.divider,
-                  baclgroundColor: colors.background.paper
                 },
                 '& .MuiDataGrid-cell': {
                   borderBottom: 1,
@@ -366,6 +435,82 @@ const Employees = ({
           onClose={showDialog.onClose}
           actions={showDialog.actions}
         />
+
+        {/* DIALOG - EDIT */}
+        <Dialog open={showEditForm.open}>
+          <DialogTitle>EDIT</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+              <TextField
+                label="ID"
+                value={showEditForm.data.id}
+                sx={{ m: 1 }}
+                onChange={(e) => {
+                  setShowEditForm({
+                    ...showEditForm,
+                    data: {
+                      ...showEditForm.data,
+                      id: e.target.value
+                    }
+                  });
+                }}
+              />
+              <TextField
+                label="Login"
+                value={showEditForm.data.login}
+                sx={{ m: 1 }}
+                onChange={(e) => {
+                  setShowEditForm({
+                    ...showEditForm,
+                    data: {
+                      ...showEditForm.data,
+                      login: e.target.value
+                    }
+                  });
+                }}
+              />
+            </Box>
+            <TextField
+              label="Name"
+              value={showEditForm.data.name}
+              sx={{ m: 1 }}
+              onChange={(e) => {
+                setShowEditForm({
+                  ...showEditForm,
+                  data: {
+                    ...showEditForm.data,
+                    name: e.target.value
+                  }
+                });
+              }}
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <TextField
+                label="Salary"
+                value={showEditForm.data.salary}
+                type="number"
+                sx={{ m: 1 }}
+                onChange={(e) => {
+                  setShowEditForm({
+                    ...showEditForm,
+                    data: {
+                      ...showEditForm.data,
+                      salary: e.target.value
+                    }
+                  });
+                }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setShowEditForm({ ...showEditForm, open: false })}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitForm}>Ok</Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </>
   );
@@ -374,7 +519,9 @@ const Employees = ({
 export default Employees;
 
 export const getServerSideProps = async () => {
-  const res = await fetch(`${apiUrl}/api/employees`);
+  const res = await fetch(
+    `${apiUrl}/api/employees?minSalary=0&offset=0&limit=30&sort=+id`
+  );
   const data = await res.json();
 
   return {
