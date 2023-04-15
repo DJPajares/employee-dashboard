@@ -22,6 +22,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import CustomDialog from '@/components/global/Dialog';
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
@@ -34,12 +35,14 @@ const Employees = ({
 
   const [selectionModel, setSelectionModel] = useState<any[]>([]);
   const [showDialogCsv, setShowDialogCsv] = useState(false);
-  // const [showDialogDelete, setShowDialogDelete] = useState(false);
-  const [showDialogDelete, setShowDialogDelete] = useState({
-    open: false
+  const [showDialogDelete, setShowDialogDelete] = useState(false);
+  const [showDialog, setShowDialog] = useState({
+    title: '',
+    content: '',
+    open: false,
+    onClose: () => {},
+    actions: <></>
   });
-  const [showDialog, setShowDialog] = useState(false);
-  const [showDialogError, setShowDialogError] = useState(false);
   const [file, setFile] = useState(null);
 
   const columns: GridColDef[] = [
@@ -81,10 +84,6 @@ const Employees = ({
     }
   ];
 
-  const test = (data) => {
-    console.log(data);
-  };
-
   const handleOnChange = (e) => {
     setFile(e.target.files[0]);
   };
@@ -93,7 +92,9 @@ const Employees = ({
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append('csv', file);
+    if (file) {
+      formData.append('csv', file);
+    }
 
     try {
       const res = await fetch(`${apiUrl}/api/employees`, {
@@ -103,15 +104,24 @@ const Employees = ({
 
       if (res.ok) {
         setShowDialogCsv(false);
-        setShowDialog(true);
+        handleDialog({
+          title: 'Upload successful',
+          content: 'Employees have been successfully uploaded'
+        });
 
         refreshData();
       } else {
-        setShowDialogError(true);
+        handleDialog({
+          title: 'Upload failed',
+          content: 'Employees have not been uploaded'
+        });
         console.error('Upload failed:', res.status, await res.text());
       }
     } catch (error) {
-      setShowDialogError(true);
+      handleDialog({
+        title: 'Upload failed',
+        content: 'Employees have not been uploaded'
+      });
       console.error('Upload failed', error);
     }
   };
@@ -128,21 +138,56 @@ const Employees = ({
 
       if (res.ok) {
         setShowDialogDelete(false);
-        setShowDialog(true); // fixme: show dialog with deletion success message
+        handleDialog({
+          title: 'Deletion successful',
+          content: 'Employees have been successfully deleted'
+        });
 
         refreshData();
       } else {
+        handleDialog({
+          title: 'Deletion failed',
+          content: 'Employees have not been deleted'
+        });
         console.error('Deletion failed:', res.status, await res.text());
-        setShowDialogError(true); // fixme: show dialog with deletion error message
       }
     } catch (error) {
+      handleDialog({
+        title: 'Deletion failed',
+        content: 'Employees have not been deleted'
+      });
       console.error('Deletion failed', error);
-      setShowDialogError(true); // fixme: show dialog with deletion error message
     }
   };
 
-  const handleDeletionDialog = () => {
-    setShowDialogDelete(true);
+  const handleDialog = ({ title, content }) => {
+    const actions = (
+      <>
+        <Button
+          onClick={() => {
+            setShowDialog({
+              ...showDialog,
+              open: false
+            });
+          }}
+        >
+          Close
+        </Button>
+      </>
+    );
+
+    setShowDialog({
+      title,
+      content,
+      open: true,
+      onClose: () => {
+        setShowDialog({
+          ...showDialog,
+          open: false
+        });
+      },
+      actions
+    });
   };
 
   const handleSelectionModelChange = (newSelection: any) => {
@@ -294,7 +339,7 @@ const Employees = ({
 
         {/* DIALOG - DELETION */}
         <Dialog
-          open={showDialogDelete.open}
+          open={showDialogDelete}
           onClose={() => setShowDialogDelete(false)}
         >
           <DialogTitle>DELETE</DialogTitle>
@@ -309,31 +354,14 @@ const Employees = ({
           </DialogActions>
         </Dialog>
 
-        {/* DIALOG - SUCCESS */}
-        <Dialog open={showDialog}>
-          <DialogTitle>SUCCESS</DialogTitle>
-          <DialogContent>
-            <Typography variant="subtitle1">
-              Employee data successfully uploaded!
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowDialog(false)}>Ok</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* DIALOG - ERROR */}
-        <Dialog open={showDialogError}>
-          <DialogTitle>ERROR</DialogTitle>
-          <DialogContent>
-            <Typography variant="subtitle1">
-              Employee data upload failed!
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowDialogError(false)}>Ok</Button>
-          </DialogActions>
-        </Dialog>
+        {/* DIALOG - GENERIC */}
+        <CustomDialog
+          title={showDialog.title}
+          content={showDialog.content}
+          open={showDialog.open}
+          onClose={showDialog.onClose}
+          actions={showDialog.actions}
+        />
       </Box>
     </>
   );
