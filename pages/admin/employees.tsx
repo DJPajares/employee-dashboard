@@ -15,7 +15,7 @@ import {
   debounce,
   useTheme
 } from '@mui/material';
-import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import Head from 'next/head';
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from 'next';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -98,7 +98,7 @@ const Employees = ({
             <IconButton onClick={() => handleEditForm(params.row)}>
               <EditIcon />
             </IconButton>
-            <IconButton onClick={() => handleDeletion([params.row.id])}>
+            <IconButton onClick={() => handleDeleteDialog([params.row.id])}>
               <DeleteIcon />
             </IconButton>
           </>
@@ -217,6 +217,37 @@ const Employees = ({
     });
   };
 
+  const handleDeleteDialog = (ids: string[]) => {
+    const actions = (
+      <>
+        <Button
+          onClick={() => {
+            setShowDialog({
+              ...showDialog,
+              open: false
+            });
+          }}
+        >
+          No
+        </Button>
+        <Button onClick={() => handleDeletion(ids)}>Yes</Button>
+      </>
+    );
+
+    setShowDialog({
+      title: 'Delete employee',
+      content: 'Are you sure you want to delete this employee?',
+      open: true,
+      onClose: () => {
+        setShowDialog({
+          ...showDialog,
+          open: false
+        });
+      },
+      actions
+    });
+  };
+
   const handleEditForm = (params: DataProps) => {
     console.log('params', params);
     setShowEditForm({
@@ -278,17 +309,6 @@ const Employees = ({
   );
 
   const handleQueryUpdate = (query) => {
-    // handle sort query
-    if (query.sort && query.sort.length > 0) {
-      const { field } = query.sort[0];
-      const direction = query.sort[0].sort === 'desc' ? '-' : '+';
-
-      query.sort = `${decodeURIComponent(
-        direction.replace(/\+/g, ' ')
-      )}${field}`;
-    }
-
-    // update router with new query
     router.query = {
       ...router.query,
       ...query
@@ -377,6 +397,38 @@ const Employees = ({
                 }}
               >
                 <InputBase
+                  placeholder="# of Employees"
+                  type="number"
+                  sx={{
+                    '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                      {
+                        display: 'none'
+                      },
+                    '& input[type=number]': {
+                      MozAppearance: 'textfield'
+                    }
+                  }}
+                  onChange={(e) =>
+                    handleQueryDebounce({
+                      limit: e.target.value
+                    })
+                  }
+                />
+              </Box>
+              <Box
+                sx={{
+                  ml: 2,
+                  px: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: 0.5,
+                  backgroundColor: colors.background.paper,
+                  '&:hover': {
+                    backgroundColor: alpha(colors.background.paper, 0.5)
+                  }
+                }}
+              >
+                <InputBase
                   placeholder="Min. Salary"
                   type="number"
                   sx={{
@@ -437,20 +489,13 @@ const Employees = ({
               autoHeight
               columns={columns}
               rows={data}
-              sortingMode="server"
-              onSortModelChange={(params) => {
-                handleQueryUpdate({
-                  sort: params
-                });
-              }}
               initialState={{
                 ...data.initialState,
-                pagination: { paginationModel: { pageSize: 5 } }
+                pagination: { paginationModel: { pageSize: 10 } }
               }}
               pageSizeOptions={[10, 20, 30]}
               rowSelectionModel={selectionModel}
               onRowSelectionModelChange={handleSelectionModelChange}
-              // slots={{ toolbar: GridToolbar }}
               sx={{
                 border: 'none',
                 borderRadius: 0,
@@ -488,10 +533,10 @@ const Employees = ({
           open={showDialogDelete}
           onClose={() => setShowDialogDelete(false)}
         >
-          <DialogTitle>DELETE</DialogTitle>
+          <DialogTitle>DELETE SELECTED</DialogTitle>
           <DialogContent>
             <Typography variant="subtitle1">
-              Are you sure you want to delete?
+              Are you sure you want to delete the selected employees?
             </Typography>
           </DialogContent>
           <DialogActions>
@@ -528,22 +573,6 @@ const Employees = ({
                   });
                 }}
               />
-            </Box>
-            <TextField
-              label="Name"
-              value={showEditForm.data.name}
-              sx={{ m: 1 }}
-              onChange={(e) => {
-                setShowEditForm({
-                  ...showEditForm,
-                  data: {
-                    ...showEditForm.data,
-                    name: e.target.value
-                  }
-                });
-              }}
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <TextField
                 label="Salary"
                 value={showEditForm.data.salary}
@@ -563,6 +592,20 @@ const Employees = ({
                 }}
               />
             </Box>
+            <TextField
+              label="Name"
+              value={showEditForm.data.name}
+              sx={{ m: 1 }}
+              onChange={(e) => {
+                setShowEditForm({
+                  ...showEditForm,
+                  data: {
+                    ...showEditForm.data,
+                    name: e.target.value
+                  }
+                });
+              }}
+            />
           </DialogContent>
           <DialogActions>
             <Button
@@ -583,11 +626,11 @@ export default Employees;
 export const getServerSideProps = async (
   context: GetServerSidePropsContext
 ) => {
-  console.log(context.query);
-  const { sort = '+id', limit = 30, offset = 0 } = context.query;
-
   const minSalary = context.query.minSalary || 0;
-  const maxSalary = context.query.maxSalary || 4000;
+  const maxSalary = context.query.maxSalary || 50000;
+  const offset = context.query.offset || 0;
+  const limit = context.query.limit || 30;
+  const sort = context.query.sort || '+id';
 
   const res = await fetch(
     `${apiUrl}/api/employees?minSalary=${minSalary}&maxSalary=${maxSalary}&offset=${offset}&limit=${limit}&sort=${sort}`
