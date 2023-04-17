@@ -12,15 +12,16 @@ import {
   TextField,
   Typography,
   alpha,
+  debounce,
   useTheme
 } from '@mui/material';
 import { DataGrid, GridColDef, GridToolbar } from '@mui/x-data-grid';
 import Head from 'next/head';
-import { InferGetServerSidePropsType } from 'next';
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from 'next';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/router';
 import CustomDialog from '@/components/global/Dialog';
 
@@ -43,7 +44,7 @@ const Employees = ({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const theme = useTheme();
   const colors = theme.palette;
-  const route = useRouter();
+  const router = useRouter();
 
   const [selectionModel, setSelectionModel] = useState<any[]>([]);
   const [showDialogCsv, setShowDialogCsv] = useState(false);
@@ -106,7 +107,7 @@ const Employees = ({
     }
   ];
 
-  const handleOnChange = (e: Event) => {
+  const handleFileInputOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputElement = e.target as HTMLInputElement;
     if (inputElement.files && inputElement.files.length > 0) {
       const file = inputElement.files[0];
@@ -197,7 +198,7 @@ const Employees = ({
             });
           }}
         >
-          Close
+          Ok
         </Button>
       </>
     );
@@ -269,8 +270,38 @@ const Employees = ({
     setSelectionModel(newSelection);
   };
 
+  const handleQueryDebounce = useCallback(
+    debounce((query) => {
+      handleQueryUpdate(query);
+    }, 500),
+    []
+  );
+
+  const handleQueryUpdate = (query) => {
+    // handle sort query
+    if (query.sort && query.sort.length > 0) {
+      const { field } = query.sort[0];
+      const direction = query.sort[0].sort === 'desc' ? '-' : '+';
+
+      query.sort = `${decodeURIComponent(
+        direction.replace(/\+/g, ' ')
+      )}${field}`;
+    }
+
+    // update router with new query
+    router.query = {
+      ...router.query,
+      ...query
+    };
+
+    router.push({
+      pathname: router.pathname,
+      query: router.query
+    });
+  };
+
   const refreshData = () => {
-    route.replace(route.asPath);
+    router.replace(router.asPath);
   };
 
   return (
@@ -345,7 +376,24 @@ const Employees = ({
                   }
                 }}
               >
-                <InputBase placeholder="Min. Salary" />
+                <InputBase
+                  placeholder="Min. Salary"
+                  type="number"
+                  sx={{
+                    '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                      {
+                        display: 'none'
+                      },
+                    '& input[type=number]': {
+                      MozAppearance: 'textfield'
+                    }
+                  }}
+                  onChange={(e) =>
+                    handleQueryDebounce({
+                      minSalary: e.target.value
+                    })
+                  }
+                />
               </Box>
               <Box
                 sx={{
@@ -360,7 +408,24 @@ const Employees = ({
                   }
                 }}
               >
-                <InputBase placeholder="Max. Salary" />
+                <InputBase
+                  placeholder="Max. Salary"
+                  type="number"
+                  sx={{
+                    '& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button':
+                      {
+                        display: 'none'
+                      },
+                    '& input[type=number]': {
+                      MozAppearance: 'textfield'
+                    }
+                  }}
+                  onChange={(e) =>
+                    handleQueryDebounce({
+                      maxSalary: e.target.value
+                    })
+                  }
+                />
               </Box>
             </Box>
           </Box>
@@ -372,9 +437,17 @@ const Employees = ({
               autoHeight
               columns={columns}
               rows={data}
-              // paginationMode="client"
-              // paginationModel={{ page: 0, pageSize: 10 }}
-              // pageSizeOptions={[10, 20, 50]}
+              sortingMode="server"
+              onSortModelChange={(params) => {
+                handleQueryUpdate({
+                  sort: params
+                });
+              }}
+              initialState={{
+                ...data.initialState,
+                pagination: { paginationModel: { pageSize: 5 } }
+              }}
+              pageSizeOptions={[10, 20, 30]}
               rowSelectionModel={selectionModel}
               onRowSelectionModelChange={handleSelectionModelChange}
               // slots={{ toolbar: GridToolbar }}
@@ -401,7 +474,7 @@ const Employees = ({
             <TextField
               type="file"
               inputProps={{ accept: '.csv' }}
-              onChange={handleOnChange}
+              onChange={handleFileInputOnChange}
             />
           </DialogContent>
           <DialogActions>
@@ -442,20 +515,6 @@ const Employees = ({
           <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
               <TextField
-                label="ID"
-                value={showEditForm.data.id}
-                sx={{ m: 1 }}
-                onChange={(e) => {
-                  setShowEditForm({
-                    ...showEditForm,
-                    data: {
-                      ...showEditForm.data,
-                      id: e.target.value
-                    }
-                  });
-                }}
-              />
-              <TextField
                 label="Login"
                 value={showEditForm.data.login}
                 sx={{ m: 1 }}
@@ -495,9 +554,12 @@ const Employees = ({
                     ...showEditForm,
                     data: {
                       ...showEditForm.data,
-                      salary: e.target.value
+                      salary: parseFloat(e.target.value)
                     }
                   });
+                }}
+                inputProps={{
+                  min: 0
                 }}
               />
             </Box>
@@ -518,11 +580,26 @@ const Employees = ({
 
 export default Employees;
 
-export const getServerSideProps = async () => {
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext
+) => {
+  console.log(context.query);
+  const { sort = '+id', limit = 30, offset = 0 } = context.query;
+
+  const minSalary = context.query.minSalary || 0;
+  const maxSalary = context.query.maxSalary || 4000;
+
   const res = await fetch(
-    `${apiUrl}/api/employees?minSalary=0&offset=0&limit=30&sort=+id`
+    `${apiUrl}/api/employees?minSalary=${minSalary}&maxSalary=${maxSalary}&offset=${offset}&limit=${limit}&sort=${sort}`
   );
-  const data = await res.json();
+
+  let data = [];
+
+  if (res.status === 200) {
+    const result = await res.json();
+
+    data = result.data;
+  }
 
   return {
     props: {
