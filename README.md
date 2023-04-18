@@ -1,4 +1,4 @@
-_This is a next.js front-end app for the `employee dashboard`_
+_This is the next.js front-end for the `employee dashboard` app_
 
 ## Requirements
 - yarn
