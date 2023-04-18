@@ -141,14 +141,14 @@ const Employees = ({
       } else {
         handleDialog({
           title: 'Upload failed',
-          content: 'File has not been uploaded'
+          content: 'File has NOT been uploaded'
         });
         console.error('Upload failed:', res.status, await res.text());
       }
     } catch (error) {
       handleDialog({
         title: 'Upload failed',
-        content: 'File has not been uploaded'
+        content: 'File has NOT been uploaded'
       });
       console.error('Upload failed', error);
       setFile(null);
@@ -176,14 +176,14 @@ const Employees = ({
       } else {
         handleDialog({
           title: 'Deletion failed',
-          content: 'Employees have not been deleted'
+          content: 'Employees have NOT been deleted'
         });
         console.error('Deletion failed:', res.status, await res.text());
       }
     } catch (error) {
       handleDialog({
         title: 'Deletion failed',
-        content: 'Employees have not been deleted'
+        content: 'Employees have NOT been deleted'
       });
       console.error('Deletion failed', error);
     }
@@ -281,14 +281,14 @@ const Employees = ({
       } else {
         handleDialog({
           title: 'Update failed',
-          content: 'Employee has not been updated'
+          content: 'Employee has NOT been updated'
         });
         console.error('Update failed:', res.status, await res.text());
       }
     } catch (error) {
       handleDialog({
         title: 'Update failed',
-        content: 'Employee has not been updated'
+        content: 'Employee has NOT been updated'
       });
       console.error('Error', error);
     }
@@ -334,7 +334,7 @@ const Employees = ({
   return (
     <>
       <Head>
-        <title>Employees</title>
+        <title>Admin - Employees</title>
       </Head>
 
       <Box

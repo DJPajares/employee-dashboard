@@ -108,7 +108,6 @@ export const themeSettings = (mode: DarkModeProps) => {
         fontWeight: 700,
         fontSize: 24,
         lineHeight: 1.2
-        // letterSpacing: '0em'
       },
       h4: {
         fontWeight: 700,
