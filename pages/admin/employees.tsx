@@ -25,7 +25,7 @@ import { useCallback, useState } from 'react';
 import { useRouter } from 'next/router';
 import CustomDialog from '@/components/global/Dialog';
 
-const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+const apiUrl = 'http://localhost:3001';
 
 type DialogProps = {
   title: string;
