@@ -120,7 +120,7 @@ const Employees = ({
 
     const formData = new FormData();
     if (file) {
-      formData.append('csv', file);
+      formData.append('file', file);
     }
 
     try {

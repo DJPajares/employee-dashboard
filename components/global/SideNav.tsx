@@ -18,7 +18,7 @@ const SideNav = () => {
   const { collapseSidebar, collapsed, toggleSidebar, broken } = useProSidebar();
 
   const userImage =
-    'https://media.gq.com/photos/5caf9c876328030f7944ecc1/1:1/w_3603,h_3603,c_limit/keanu-reeves-gq-cover-may-2019-social.jpg';
+    'https://st.depositphotos.com/1898481/3884/i/600/depositphotos_38840419-stock-photo-silhouette.jpg';
 
   const imageSize = collapsed ? 30 : 100;
   const router = useRouter();
@@ -30,7 +30,7 @@ const SideNav = () => {
           {!collapsed && (
             <Box pr={2} onClick={() => router.push('/')}>
               <Typography fontSize={20} fontFamily="Sigmar One">
-                WAPP
+                HRBoard
               </Typography>
             </Box>
           )}
@@ -77,7 +77,7 @@ const SideNav = () => {
             }}
           >
             <Typography variant="h3" color={colors.primary.main}>
-              John Wick
+              ThisUser
             </Typography>
           </Box>
         )}
