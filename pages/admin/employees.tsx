@@ -69,11 +69,11 @@ const Employees = ({
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 100 },
-    { field: 'login', headerName: 'Login', width: 130 },
-    { field: 'name', headerName: 'Name', width: 250 },
+    { field: 'login', headerName: 'LOGIN', width: 130 },
+    { field: 'name', headerName: 'NAME', width: 250 },
     {
       field: 'salary',
-      headerName: 'Salary',
+      headerName: 'SALARY',
       width: 180,
       type: 'number',
       valueFormatter: ({ value }) =>
@@ -84,7 +84,7 @@ const Employees = ({
     },
     {
       field: 'actions',
-      headerName: 'Actions',
+      headerName: 'ACTIONS',
       width: 180,
       type: 'actions',
       headerAlign: 'center',
@@ -133,23 +133,25 @@ const Employees = ({
         setShowDialogCsv(false);
         handleDialog({
           title: 'Upload successful',
-          content: 'Employees have been successfully uploaded'
+          content: 'File has been successfully uploaded'
         });
 
+        setFile(null);
         refreshData();
       } else {
         handleDialog({
           title: 'Upload failed',
-          content: 'Employees have not been uploaded'
+          content: 'File has not been uploaded'
         });
         console.error('Upload failed:', res.status, await res.text());
       }
     } catch (error) {
       handleDialog({
         title: 'Upload failed',
-        content: 'Employees have not been uploaded'
+        content: 'File has not been uploaded'
       });
       console.error('Upload failed', error);
+      setFile(null);
     }
   };
 
@@ -299,6 +301,11 @@ const Employees = ({
 
   const handleSelectionModelChange = (newSelection: DataProps[]) => {
     setSelectionModel(newSelection);
+  };
+
+  const handleCloseCsvDialog = () => {
+    setShowDialogCsv(false);
+    setFile(null);
   };
 
   const handleQueryDebounce = useCallback(
@@ -500,8 +507,9 @@ const Employees = ({
                 border: 'none',
                 borderRadius: 0,
                 '& .MuiDataGrid-columnHeaders': {
-                  backgroundColor: colors.background.paper,
-                  borderRadius: 0
+                  backgroundColor: colors.background.default,
+                  borderRadius: 0,
+                  fontSize: 16
                 },
                 '& .MuiDataGrid-cell': {
                   borderBottom: 1,
@@ -513,7 +521,7 @@ const Employees = ({
         </Box>
 
         {/* DIALOG - CSV */}
-        <Dialog open={showDialogCsv} onClose={() => setShowDialogCsv(false)}>
+        <Dialog open={showDialogCsv} onClose={handleCloseCsvDialog}>
           <DialogTitle>UPLOAD CSV</DialogTitle>
           <DialogContent>
             <TextField
@@ -523,7 +531,7 @@ const Employees = ({
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowDialogCsv(false)}>Cancel</Button>
+            <Button onClick={handleCloseCsvDialog}>Cancel</Button>
             <Button onClick={(e) => handleUploadCsv(e)}>Ok</Button>
           </DialogActions>
         </Dialog>
@@ -536,7 +544,7 @@ const Employees = ({
           <DialogTitle>DELETE SELECTED</DialogTitle>
           <DialogContent>
             <Typography variant="subtitle1">
-              Are you sure you want to delete the selected employees?
+              Are you sure you want to delete the selected employee/s?
             </Typography>
           </DialogContent>
           <DialogActions>
